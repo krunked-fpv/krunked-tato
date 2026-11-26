@@ -33,6 +33,7 @@ const MAX_QUADS = 16384;
 const FLOATS_PER_QUAD = 16;
 const MAX_DECALS = 160;
 const MAX_PARTICLES = 320;
+const MAX_AMBIENT_MOTES = 48;
 const MAX_FLOATING_TEXTS = 96;
 const MAX_TEXT_QUADS = 1024;
 
@@ -88,6 +89,17 @@ interface FloatingText {
   b: number;
 }
 
+interface AmbientMote {
+  x: number;
+  y: number;
+  size: number;
+  phase: number;
+  speed: number;
+  drift: number;
+  alpha: number;
+  variant: number; // 0 = soft orb/spore, 1 = bubble ring / gold dust
+}
+
 const DEFAULT_WHITE_REGION: AtlasRegion = {
   id: 'vfx_white',
   x: 0,
@@ -126,22 +138,34 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
-function getZoneBackdropRgb(zoneId: 0 | 1 | 2): [number, number, number] {
-  if (zoneId === 1) return [0.055, 0.095, 0.135]; // Abyssal Trench
-  if (zoneId === 2) return [0.075, 0.12, 0.075];  // Primal Jungle
-  return [0.115, 0.092, 0.088];                   // Crash Zone
+const ZONE_BACKDROP_RGB: readonly [readonly [number, number, number], readonly [number, number, number], readonly [number, number, number]] = [
+  [0.115, 0.092, 0.088], // Zone 0: Crash Zone
+  [0.055, 0.095, 0.135], // Zone 1: Abyssal Trench
+  [0.075, 0.12, 0.075],  // Zone 2: Primal Jungle
+];
+
+const ZONE_WALL_RGB: readonly [readonly [number, number, number], readonly [number, number, number], readonly [number, number, number]] = [
+  [0.24, 0.19, 0.17],
+  [0.11, 0.21, 0.28],
+  [0.15, 0.24, 0.14],
+];
+
+const ZONE_TRIM_RGB: readonly [readonly [number, number, number], readonly [number, number, number], readonly [number, number, number]] = [
+  [0.85, 0.56, 0.34],
+  [0.22, 0.78, 0.94],
+  [0.42, 0.8, 0.34],
+];
+
+function getZoneBackdropRgb(zoneId: 0 | 1 | 2): readonly [number, number, number] {
+  return ZONE_BACKDROP_RGB[zoneId] ?? ZONE_BACKDROP_RGB[0];
 }
 
-function getZoneWallRgb(zoneId: 0 | 1 | 2): [number, number, number] {
-  if (zoneId === 1) return [0.11, 0.21, 0.28];
-  if (zoneId === 2) return [0.15, 0.24, 0.14];
-  return [0.24, 0.19, 0.17];
+function getZoneWallRgb(zoneId: 0 | 1 | 2): readonly [number, number, number] {
+  return ZONE_WALL_RGB[zoneId] ?? ZONE_WALL_RGB[0];
 }
 
-function getZoneTrimRgb(zoneId: 0 | 1 | 2): [number, number, number] {
-  if (zoneId === 1) return [0.22, 0.78, 0.94];
-  if (zoneId === 2) return [0.42, 0.8, 0.34];
-  return [0.85, 0.56, 0.34];
+function getZoneTrimRgb(zoneId: 0 | 1 | 2): readonly [number, number, number] {
+  return ZONE_TRIM_RGB[zoneId] ?? ZONE_TRIM_RGB[0];
 }
 
 export function computeViewportZoom(cssW: number, cssH: number, cameraZoom: number): number {
@@ -260,12 +284,24 @@ export class WebGL2Renderer implements RendererAPI {
   private animClock = 0;
   private fxRng = 0x9e3779b9;
   private readonly scratchRgb: [number, number, number] = [1, 1, 1];
+  private readonly tileRegionScratch: AtlasRegion = {
+    id: 'tile_scratch',
+    x: 0,
+    y: 0,
+    w: 128,
+    h: 128,
+    u0: 0,
+    v0: 0,
+    u1: 1,
+    v1: 1,
+  };
 
   // Pre-allocated pools (ZERO per-frame heap allocations!)
   private readonly decals: FloorDecal[] = [];
   private decalCursor = 0;
   private readonly particles: Particle[] = [];
   private particleCursor = 0;
+  private readonly ambientMotes: AmbientMote[] = [];
   private readonly floatingTexts: FloatingText[] = [];
   private textCursor = 0;
 
@@ -299,6 +335,18 @@ export class WebGL2Renderer implements RendererAPI {
       this.floatingTexts.push({
         active: false, text: '', x: 0, y: 0, vy: -50, scale: 1,
         life: 0, maxLife: 0.65, r: 1, g: 1, b: 1,
+      });
+    }
+    for (let i = 0; i < MAX_AMBIENT_MOTES; i++) {
+      this.ambientMotes.push({
+        x: EDGE_MAP_DIST + this.nextFxRand() * (ARENA_W - EDGE_MAP_DIST * 2),
+        y: EDGE_MAP_DIST + this.nextFxRand() * (ARENA_H - EDGE_MAP_DIST * 2),
+        size: 5 + this.nextFxRand() * 11,
+        phase: this.nextFxRand() * Math.PI * 2,
+        speed: 14 + this.nextFxRand() * 24,
+        drift: (this.nextFxRand() - 0.5) * 20,
+        alpha: 0.14 + this.nextFxRand() * 0.16,
+        variant: i % 3 === 0 ? 1 : 0,
       });
     }
 
@@ -666,7 +714,7 @@ export class WebGL2Renderer implements RendererAPI {
     this.textQuadCount++;
   }
 
-  private stepVisualPools(dt: number): void {
+  private stepVisualPools(dt: number, zoneId: 0 | 1 | 2): void {
     for (let i = 0; i < MAX_PARTICLES; i++) {
       const p = this.particles[i];
       if (!p.active) continue;
@@ -692,13 +740,43 @@ export class WebGL2Renderer implements RendererAPI {
       ft.y += ft.vy * dt;
       ft.vy *= 0.93;
     }
+
+    // Zero-GC Biome atmospheric ambient motes
+    const minX = EDGE_MAP_DIST;
+    const maxX = ARENA_W - EDGE_MAP_DIST;
+    const minY = EDGE_MAP_DIST;
+    const maxY = ARENA_H - EDGE_MAP_DIST;
+    const spanX = maxX - minX;
+    const spanY = maxY - minY;
+    const t = this.animClock;
+
+    for (let i = 0; i < MAX_AMBIENT_MOTES; i++) {
+      const m = this.ambientMotes[i];
+      if (zoneId === 1) {
+        // Abyssal Trench: slow rising cyan bioluminescent bubbles & motes
+        m.x += Math.sin(t * 1.45 + m.phase) * 14 * dt;
+        m.y -= m.speed * dt;
+      } else if (zoneId === 2) {
+        // Primal Jungle: gently drifting lime & gold spore dust
+        m.x += (11 + m.drift * 0.45 + Math.cos(t * 0.9 + m.phase) * 9) * dt;
+        m.y += (Math.sin(t * 1.25 + m.phase) * 12 - 4) * dt;
+      } else {
+        // Crash Zone: crisp sparse warm alien dust drift
+        m.x += (8 + m.speed * 0.25) * dt;
+        m.y += Math.sin(t * 0.7 + m.phase) * 5 * dt;
+      }
+      if (m.x < minX) m.x += spanX;
+      else if (m.x > maxX) m.x -= spanX;
+      if (m.y < minY) m.y += spanY;
+      else if (m.y > maxY) m.y -= spanY;
+    }
   }
 
   public render(state: SimState, interpAlpha: number, settings: RenderSettings): void {
     const alpha = settings.classicSnap60 ? 1.0 : Math.max(0, Math.min(1, interpAlpha));
     const dt = 1 / 60;
     this.animClock += dt;
-    this.stepVisualPools(dt);
+    this.stepVisualPools(dt, state.zoneId);
 
     const gl = this.gl;
     const bg = getZoneBackdropRgb(state.zoneId);
@@ -729,23 +807,36 @@ export class WebGL2Renderer implements RendererAPI {
     this.pushQuad(whiteReg, -wallT / 2 + EDGE_MAP_DIST / 2, ARENA_H / 2, wallT + EDGE_MAP_DIST, ARENA_H, 0, wallRgb[0], wallRgb[1], wallRgb[2], 1);
     this.pushQuad(whiteReg, ARENA_W + wallT / 2 - EDGE_MAP_DIST / 2, ARENA_H / 2, wallT + EDGE_MAP_DIST, ARENA_H, 0, wallRgb[0], wallRgb[1], wallRgb[2], 1);
 
-    // Playable floor tile grid (cohesive single-theme floor tile per zone with subtle organic tint variation)
+    // Playable floor tile grid — inset half-texel UV clamping eliminates sub-pixel seams on smooth pan
     const tileStep = 128;
     const tileCols = Math.ceil(ARENA_W / tileStep);
     const tileRows = Math.ceil(ARENA_H / tileStep);
     const baseTileId =
       state.zoneId === 1 ? 'tile_abyss_0' : state.zoneId === 2 ? 'tile_jungle_1' : 'tile_crash_1';
-    const tileReg = this.getRegion(baseTileId, 'tile_crash_1');
+    const rawTileReg = this.getRegion(baseTileId, 'tile_crash_1');
+    const insetU = 0.65 / this.atlasWidth;
+    const insetV = 0.65 / this.atlasHeight;
+    const clampedTileReg = this.tileRegionScratch;
+    clampedTileReg.id = rawTileReg.id;
+    clampedTileReg.x = rawTileReg.x;
+    clampedTileReg.y = rawTileReg.y;
+    clampedTileReg.w = rawTileReg.w;
+    clampedTileReg.h = rawTileReg.h;
+    clampedTileReg.u0 = rawTileReg.u0 + insetU;
+    clampedTileReg.v0 = rawTileReg.v0 + insetV;
+    clampedTileReg.u1 = rawTileReg.u1 - insetU;
+    clampedTileReg.v1 = rawTileReg.v1 - insetV;
+
     for (let ty = 0; ty < tileRows; ty++) {
       for (let tx = 0; tx < tileCols; tx++) {
         const hash = ((tx * 73856093) ^ (ty * 19349663)) >>> 0;
-        const shade = 0.965 + ((hash % 15) / 15) * 0.055;
+        const shade = 0.992 + ((hash % 7) / 7) * 0.016;
         this.pushQuad(
-          tileReg,
+          clampedTileReg,
           tx * tileStep + tileStep / 2,
           ty * tileStep + tileStep / 2,
-          tileStep + 1,
-          tileStep + 1,
+          tileStep + 1.5,
+          tileStep + 1.5,
           0,
           shade,
           shade,
@@ -927,6 +1018,46 @@ export class WebGL2Renderer implements RendererAPI {
       const t = 1 - pt.life / pt.maxLife;
       const sz = lerp(pt.size, pt.endSize, t);
       this.pushQuad(this.getRegion(pt.spriteId), pt.x, pt.y, sz, sz, pt.rot, pt.r, pt.g, pt.b, pt.a * (1 - t));
+    }
+
+    // Subtle atmospheric Biome ambient particles (kept beneath Layer 9 enemy projectiles for crisp clarity)
+    const circleReg = this.getRegion('vfx_circle');
+    const sparkReg = this.getRegion('vfx_spark');
+    const moteCount = state.zoneId === 0 ? 18 : MAX_AMBIENT_MOTES;
+    for (let i = 0; i < moteCount; i++) {
+      const m = this.ambientMotes[i];
+      if (Math.abs(m.x - camX) > halfWorldW + 40 || Math.abs(m.y - camY) > halfWorldH + 40) {
+        continue;
+      }
+      const pulse = 0.65 + 0.35 * Math.sin(this.animClock * 2.4 + m.phase);
+      if (state.zoneId === 1) {
+        // Abyssal Trench: bioluminescent cyan bubbles & drifting sea motes
+        const isBubble = m.variant === 1;
+        const reg = isBubble ? ringReg : circleReg;
+        const sz = isBubble ? m.size * 1.15 : m.size * 0.72;
+        this.pushQuad(reg, m.x, m.y, sz, sz, 0, isBubble ? 0.45 : 0.18, isBubble ? 0.96 : 0.88, 1.0, m.alpha * pulse);
+      } else if (state.zoneId === 2) {
+        // Primal Jungle: drifting lime & warm sunlit gold spore dust
+        const isGold = m.variant === 1;
+        const reg = isGold && i % 6 === 0 ? sparkReg : circleReg;
+        const sz = m.size * (isGold ? 0.78 : 0.68);
+        this.pushQuad(
+          reg,
+          m.x,
+          m.y,
+          sz,
+          sz,
+          isGold ? this.animClock * 0.8 + m.phase : 0,
+          isGold ? 0.98 : 0.56,
+          isGold ? 0.86 : 0.96,
+          isGold ? 0.32 : 0.34,
+          m.alpha * pulse
+        );
+      } else {
+        // Crash Zone: crisp sparse dusty warmth
+        const sz = m.size * 0.55;
+        this.pushQuad(circleReg, m.x, m.y, sz, sz, 0, 0.94, 0.76, 0.56, m.alpha * 0.48 * pulse);
+      }
     }
 
     // ------------------------------------------------------------------
