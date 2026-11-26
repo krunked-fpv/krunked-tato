@@ -1,0 +1,40 @@
+import type { ZoneDef } from '../contracts/index.ts';
+
+export const ZONES: readonly ZoneDef[] = [
+  {
+    id: 0,
+    key: 'crash_zone',
+    name: 'Crash Zone',
+    subtitle: 'Arid alien crater strewn with orbital wreckage and dry trenches',
+    floorPrimary: '#382f2b',
+    floorSecondary: '#2e2623',
+    borderColor: '#1b1514',
+    accentColor: '#e5924a',
+    propSpritePrefix: 'tile_crash',
+    ambientHazard: 'none',
+  },
+  {
+    id: 1,
+    key: 'abyssal_trench',
+    name: 'Abyssal Trench',
+    subtitle: 'Deep-sea bioluminescent slate lit by thermal vents and abyssal coral',
+    floorPrimary: '#192736',
+    floorSecondary: '#131e2a',
+    borderColor: '#0b121a',
+    accentColor: '#3dd6d0',
+    propSpritePrefix: 'tile_abyss',
+    ambientHazard: 'abyss_currents',
+  },
+  {
+    id: 2,
+    key: 'primal_jungle',
+    name: 'Primal Jungle',
+    subtitle: 'Overgrown mossy loam teeming with vine ruins and glowing spore flora',
+    floorPrimary: '#223325',
+    floorSecondary: '#1b291e',
+    borderColor: '#101912',
+    accentColor: '#7be055',
+    propSpritePrefix: 'tile_jungle',
+    ambientHazard: 'jungle_spores',
+  },
+];
