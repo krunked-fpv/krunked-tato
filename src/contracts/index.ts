@@ -1096,6 +1096,40 @@ export interface AudioEngineAPI {
   dispose(): void;
 }
 
+export interface SimEconomyHooks {
+  rollShop(state: SimState, catalog: GameDataCatalog, nextRand: () => number, preserveLocked: boolean): void;
+  buyShopOffer(state: SimState, catalog: GameDataCatalog, slotIndex: number, nextRand: () => number): boolean;
+  lockShopOffer(state: SimState, slotIndex: number): boolean;
+  rerollShop(state: SimState, catalog: GameDataCatalog, nextRand: () => number): boolean;
+  combineWeapon(state: SimState, catalog: GameDataCatalog, weaponUid: number): boolean;
+  recycleWeapon(state: SimState, catalog: GameDataCatalog, weaponUid: number): boolean;
+  rollLevelUpOffers(state: SimState, catalog: GameDataCatalog, nextRand: () => number): void;
+  pickLevelUpUpgrade(state: SimState, catalog: GameDataCatalog, index: number, nextRand: () => number): boolean;
+  rerollLevelUpOffers(state: SimState, catalog: GameDataCatalog, nextRand: () => number): boolean;
+  enqueueCrate(state: SimState, catalog: GameDataCatalog, isLegendary: boolean, nextRand: () => number): void;
+  resolveCrate(state: SimState, catalog: GameDataCatalog, keep: boolean, nextRand: () => number): boolean;
+  onWaveEndProgression(state: SimState, catalog: GameDataCatalog, nextRand: () => number): void;
+  getShopPrice(baseValue: number, isWeapon: boolean, wave: number, isEndless: boolean, stats: StatMap): number;
+  getRerollCost(wave: number, isEndless: boolean, rerollCount: number, stats: StatMap): number;
+  getRecycleRefund(shopPrice: number, stats: StatMap): number;
+  getRarityTierRoll(wave: number, luck: number, nextRand: () => number): 0 | 1 | 2 | 3;
+}
+
+export interface UIManagerCallbacks {
+  onCommand(cmd: SimCommand): void;
+  onUpdateRenderSettings(patch: Partial<RenderSettings>): void;
+  onUpdateAudioSettings(patch: Partial<AudioSettings>): void;
+  onUpdateTouchSettings(patch: Partial<TouchSettings>): void;
+  onUpdateKeyBindings(patch: Partial<KeyBindings>): void;
+  onSelectAssetMode(mode: AssetMode): Promise<void>;
+  onUploadPckFile(file: File): Promise<void>;
+  onUploadPackDirectory(files: FileList): Promise<void>;
+  onClearCustomPack(): Promise<void>;
+  onContinueSavedRun(): void;
+  onResetSave(): void;
+  onPlayUiClick(kind: 'hover' | 'confirm' | 'cancel' | 'buy' | 'reroll' | 'combine' | 'error'): void;
+}
+
 export interface DebugBridge {
   readonly version: string;
   getState(): SimState;
