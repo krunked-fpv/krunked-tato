@@ -1,0 +1,28 @@
+{
+  "name": "krunked-tato",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "krunkedtato — 60 Hz deterministic arena shooter roguelite with multi-device input, WebGL2 rendering, and dual Built-In / Custom Pack assets.",
+  "scripts": {
+    "extract": "tsx tools/extract-assets.ts",
+    "oracle": "tsx tools/oracle-dump.ts",
+    "dev": "vite",
+    "play": "vite --host 127.0.0.1 --port 5173",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "verify:assets": "tsx scripts/verify/verify-assets.ts",
+    "verify:sim": "tsx scripts/verify/verify-sim.ts",
+    "verify": "npm run typecheck && npm run test && npm run verify:assets && npm run verify:sim",
+    "build": "vite build",
+    "export:dna": "tsx export-dna.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5",
+    "vitest": "^2.1.8"
+  }
+}
