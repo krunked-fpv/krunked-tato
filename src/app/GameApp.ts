@@ -369,6 +369,25 @@ export class GameApp {
     }
     applySimCommand(this.state, cmd, GAME_CATALOG, DEFAULT_ECONOMY_HOOKS);
     this.handlePostStepSideEffects();
+    if (
+      cmd.type === 'shop_buy' ||
+      cmd.type === 'shop_lock' ||
+      cmd.type === 'shop_reroll' ||
+      cmd.type === 'shop_combine' ||
+      cmd.type === 'shop_recycle' ||
+      cmd.type === 'level_up_pick' ||
+      cmd.type === 'level_up_reroll' ||
+      cmd.type === 'crate_keep' ||
+      cmd.type === 'crate_recycle'
+    ) {
+      if (
+        this.state.screen === 'shop' ||
+        this.state.screen === 'level_up' ||
+        this.state.screen === 'crate_modal'
+      ) {
+        this.saveManager.saveActiveRun(this.state);
+      }
+    }
     this.ui.invalidate();
     this.renderUiImmediate();
   }

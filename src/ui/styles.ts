@@ -721,8 +721,9 @@ const STYLES_CSS = `
 .kt-shop-body {
   flex: 1;
   min-height: 0;
+  min-width: 0;
   display: grid;
-  grid-template-columns: 1fr 252px;
+  grid-template-columns: minmax(0, 1fr) 252px;
   gap: 12px;
 }
 .kt-shop-main {
@@ -730,13 +731,15 @@ const STYLES_CSS = `
   flex-direction: column;
   gap: 10px;
   min-height: 0;
+  min-width: 0;
   overflow-y: auto;
   padding-right: 2px;
 }
 .kt-shop-offers {
   display: grid;
-  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
+  min-width: 0;
 }
 .kt-offer-card {
   display: flex;
@@ -749,6 +752,8 @@ const STYLES_CSS = `
   border-radius: 13px;
   box-shadow: 0 4px 0 var(--kt-ink);
   min-height: 210px;
+  min-width: 0;
+  max-width: 100%;
 }
 .kt-offer-card.kt-offer-sold {
   opacity: 0.42;
@@ -771,23 +776,29 @@ const STYLES_CSS = `
 .kt-offer-actions {
   display: flex;
   gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 .kt-offer-actions .kt-btn {
-  flex: 1;
+  flex: 1 1 88px;
   padding: 6px 8px;
   font-size: 13px;
+  min-width: 0;
 }
 
 .kt-shop-bottom-row {
   display: grid;
-  grid-template-columns: 1.25fr 1fr;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
   gap: 10px;
+  min-width: 0;
 }
 .kt-subpanel {
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
+  max-width: 100%;
 }
 .kt-subpanel-title {
   font-size: 13px;
@@ -798,11 +809,14 @@ const STYLES_CSS = `
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 .kt-weapons-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
   gap: 7px;
+  min-width: 0;
 }
 .kt-weapon-slot {
   display: flex;
@@ -1034,27 +1048,57 @@ const STYLES_CSS = `
 }
 
 /* ---------- Responsive Breakpoints (Tesla 1280x800, Mobile Landscape & Portrait) ---------- */
-@media (max-width: 1020px) {
+@media (max-width: 1020px), (max-height: 540px) {
+  .kt-screen {
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  .kt-header {
+    flex-shrink: 0;
+    min-width: 0;
+    max-width: 100%;
+  }
   .kt-shop-body {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    flex: none;
+    min-width: 0;
+    max-width: 100%;
+    overflow: visible;
+  }
+  .kt-shop-main {
+    flex: none;
+    overflow: visible;
+    padding-right: 0;
   }
   .kt-shop-offers {
-    grid-template-columns: repeat(2, minmax(140px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .kt-shop-bottom-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .kt-stats-sidebar {
-    max-height: 220px;
+    max-height: none;
+    overflow: visible;
+    min-width: 0;
+    max-width: 100%;
   }
   .kt-select-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    flex: none;
+    overflow: visible;
+  }
+  .kt-card-grid {
+    max-height: 44vh;
   }
   .kt-zone-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    flex: none;
+    overflow: visible;
   }
   .kt-upgrade-grid {
-    grid-template-columns: repeat(2, minmax(130px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -1065,6 +1109,22 @@ const STYLES_CSS = `
 }
 
 @media (max-width: 640px) {
+  .kt-screen {
+    padding: calc(10px + var(--kt-safe-t)) calc(10px + var(--kt-safe-r)) calc(14px + var(--kt-safe-b)) calc(10px + var(--kt-safe-l));
+    gap: 10px;
+  }
+  .kt-shop-offers {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .kt-offer-card {
+    min-height: auto;
+  }
+  .kt-upgrade-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .kt-pick-card {
+    padding: 10px 6px 12px;
+  }
   .kt-hud-top {
     grid-template-columns: 1fr auto;
   }
