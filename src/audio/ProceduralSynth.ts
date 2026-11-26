@@ -63,13 +63,18 @@ interface TrackPattern {
   kick: readonly number[]; // velocity 0..1
   snare: readonly number[];
   hat: readonly number[];
-  perc?: readonly number[]; // optional tom/rim/bongo hits (MIDI or velocity)
+  perc?: readonly number[]; // optional tribal tom/bongo hits (MIDI note)
+  marimba?: readonly (number | null)[]; // woody pitched marimba/kalimba layer (Zone 2 Primal Jungle)
+  sonar?: readonly (number | null)[]; // deep-sea resonant sonar ping layer (Zone 1 Abyssal Trench)
+  brassStabs?: Readonly<Record<number, readonly number[]>>; // urgent alarm brass stabs (Elite & Boss)
   bass: readonly (number | null)[]; // MIDI note
   bassType: OscillatorType;
   bassFilterHz: number;
+  doubleTimeSub?: boolean; // adds pounding sub-octave reinforcement + 16th-note drive
   lead: readonly (number | null)[]; // MIDI note
   leadType: OscillatorType;
   leadFilterHz: number;
+  leadStyle?: 'default' | 'surf' | 'sonar' | 'marimba' | 'shred';
   chords: Readonly<Record<number, readonly number[]>>; // step -> MIDI notes
   chordStyle: 'pad' | 'rhodes' | 'stab' | 'arp';
   arp?: readonly (number | null)[]; // high arpeggio shimmer layer
@@ -122,207 +127,358 @@ const TRACK_PATTERNS: Readonly<Record<ProceduralMusicTrack, TrackPattern>> = {
     ],
   },
 
-  // Zone 0 Crash Zone: Driving gritty sci-fi arena rock-synth (E minor, 134 BPM)
+  // Zone 0 Crash Zone: Driving alien surf-synth groove (E minor / surf Phrygian, 138 BPM, 64-step 4-bar)
   combat_crash: {
-    bpm: 134,
-    steps: 32,
-    swing: 0,
+    bpm: 138,
+    steps: 64,
+    swing: 0.02,
     kick: [
-      1, 0, 0, 0.4, 1, 0, 0, 0, 1, 0, 0.45, 0, 1, 0, 0, 0,
-      1, 0, 0, 0.4, 1, 0, 0, 0, 1, 0, 0.5, 0, 1, 0, 0.65, 0,
+      1, 0, 0, 0.45, 1, 0, 0.4, 0, 1, 0, 0.5, 0, 1, 0, 0, 0,
+      1, 0, 0, 0.45, 1, 0, 0.4, 0, 1, 0, 0.55, 0, 1, 0, 0.65, 0,
+      1, 0, 0, 0.45, 1, 0, 0.4, 0, 1, 0, 0.5, 0, 1, 0, 0.35, 0,
+      1, 0, 0.4, 0, 1, 0, 0.45, 0, 1, 0, 0.55, 0.4, 1, 0.5, 0.75, 0,
     ],
     snare: [
-      0, 0, 0, 0, 0.9, 0, 0, 0.25, 0, 0, 0, 0, 0.95, 0, 0, 0,
-      0, 0, 0, 0, 0.9, 0, 0, 0.25, 0, 0, 0, 0.35, 0.95, 0, 0.4, 0.5,
+      0, 0, 0, 0, 0.9, 0, 0, 0.25, 0, 0, 0, 0, 0.95, 0, 0.28, 0,
+      0, 0, 0, 0, 0.9, 0, 0, 0.25, 0, 0, 0, 0.35, 0.95, 0, 0.45, 0.55,
+      0, 0, 0, 0, 0.9, 0, 0, 0.25, 0, 0, 0, 0, 0.95, 0, 0.3, 0,
+      0, 0, 0, 0, 0.9, 0, 0.3, 0, 0, 0, 0.4, 0, 0.95, 0.45, 0.65, 0.8,
     ],
     hat: [
-      0.4, 0.25, 0.7, 0.25, 0.4, 0.25, 0.7, 0.3, 0.4, 0.25, 0.7, 0.25, 0.4, 0.3, 0.75, 0.3,
-      0.4, 0.25, 0.7, 0.25, 0.4, 0.25, 0.7, 0.3, 0.4, 0.25, 0.7, 0.3, 0.45, 0.35, 0.8, 0.4,
+      0.45, 0.25, 0.75, 0.25, 0.45, 0.25, 0.75, 0.3, 0.45, 0.25, 0.75, 0.25, 0.45, 0.3, 0.8, 0.3,
+      0.45, 0.25, 0.75, 0.25, 0.45, 0.25, 0.75, 0.3, 0.45, 0.25, 0.75, 0.3, 0.5, 0.35, 0.85, 0.4,
+      0.45, 0.25, 0.75, 0.25, 0.45, 0.25, 0.75, 0.3, 0.45, 0.25, 0.75, 0.25, 0.45, 0.3, 0.8, 0.35,
+      0.45, 0.25, 0.75, 0.3, 0.45, 0.3, 0.8, 0.35, 0.5, 0.35, 0.8, 0.35, 0.55, 0.4, 0.9, 0.45,
+    ],
+    // Surf-rock tom fill on turnarounds
+    perc: [
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 52, 50, 47,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 55, 52, 50, 48, 47, 45,
     ],
     bass: [
       40, 40, 52, 40, 40, 40, 47, 43, 40, 40, 52, 40, 45, 43, 42, 40,
       36, 36, 48, 36, 38, 38, 50, 38, 40, 40, 52, 47, 45, 43, 42, 38,
+      40, 40, 52, 40, 43, 43, 55, 43, 45, 45, 57, 45, 47, 45, 43, 42,
+      36, 36, 48, 43, 38, 38, 50, 45, 40, 40, 52, 47, 45, 43, 42, 39,
     ],
     bassType: 'sawtooth',
-    bassFilterHz: 920,
+    bassFilterHz: 1020,
+    // Twangy chromatic alien surf-synth riff!
     lead: [
-      64, null, 67, null, 71, 69, 67, null, 64, null, 62, 64, 67, null, null, null,
-      72, null, 71, null, 69, null, 67, 64, 66, null, 67, null, 71, null, 67, null,
+      64, 64, 67, null, 71, 72, 71, 67, 64, null, 62, 64, 67, null, 64, null,
+      72, 72, 71, null, 69, 67, 64, null, 66, null, 67, 71, 76, null, 71, null,
+      76, 76, 75, 76, 79, null, 76, 71, 72, 72, 71, 69, 67, null, 64, null,
+      69, null, 71, 72, 74, null, 72, 71, 69, 67, 66, 67, 71, null, 64, null,
     ],
     leadType: 'sawtooth',
-    leadFilterHz: 2600,
+    leadFilterHz: 3100,
+    leadStyle: 'surf',
     chords: {
       0: [52, 55, 59],
       16: [48, 52, 55],
       20: [50, 54, 57],
       24: [52, 55, 59],
+      32: [52, 55, 59],
+      40: [57, 60, 64],
+      48: [48, 52, 55],
+      52: [50, 54, 57],
+      56: [52, 55, 59, 64],
     },
     chordStyle: 'stab',
+    arp: [
+      76, null, 79, null, 83, null, 79, null, 76, null, 79, null, 83, 81, 79, null,
+      72, null, 76, null, 74, null, 78, null, 76, null, 79, null, 83, null, 79, null,
+      76, null, 79, null, 83, null, 88, null, 81, null, 84, null, 88, null, 84, null,
+      72, null, 76, null, 74, null, 78, null, 76, 79, 83, 86, 88, null, 83, null,
+    ],
   },
 
-  // Zone 1 Abyssal Trench: Deep bioluminescent liquid dark-synth (C Phrygian/minor, 126 BPM)
+  // Zone 1 Abyssal Trench: Deep moody pulsing sonar synth bass & bioluminescent arps (C Phrygian, 124 BPM, 64-step)
   combat_abyss: {
-    bpm: 126,
-    steps: 32,
+    bpm: 124,
+    steps: 64,
     swing: 0.03,
     kick: [
-      0.95, 0, 0, 0, 0, 0, 0.6, 0, 0.9, 0, 0, 0.45, 0, 0, 0, 0,
-      0.95, 0, 0, 0, 0, 0, 0.65, 0, 0.9, 0, 0, 0, 0, 0.4, 0, 0.45,
+      1.0, 0, 0, 0, 0, 0, 0.65, 0, 0.92, 0, 0, 0.45, 0, 0, 0, 0,
+      1.0, 0, 0, 0, 0, 0, 0.7, 0, 0.92, 0, 0, 0, 0, 0.42, 0, 0.5,
+      1.0, 0, 0, 0.35, 0, 0, 0.65, 0, 0.92, 0, 0, 0.45, 0, 0, 0.4, 0,
+      1.0, 0, 0, 0, 0, 0, 0.72, 0, 0.95, 0, 0.4, 0, 0, 0.45, 0, 0.55,
     ],
     snare: [
-      0, 0, 0, 0, 0.7, 0, 0, 0, 0, 0, 0, 0, 0.75, 0, 0.25, 0,
-      0, 0, 0, 0, 0.7, 0, 0, 0, 0, 0, 0, 0, 0.8, 0, 0, 0.3,
+      0, 0, 0, 0, 0.72, 0, 0, 0, 0, 0, 0, 0, 0.78, 0, 0.25, 0,
+      0, 0, 0, 0, 0.72, 0, 0, 0, 0, 0, 0, 0, 0.82, 0, 0, 0.32,
+      0, 0, 0, 0, 0.75, 0, 0, 0.2, 0, 0, 0, 0, 0.8, 0, 0.28, 0,
+      0, 0, 0, 0, 0.75, 0, 0, 0, 0, 0, 0.3, 0, 0.85, 0, 0.35, 0.4,
     ],
     hat: [
-      0.3, 0, 0.55, 0.2, 0.3, 0.2, 0.55, 0, 0.3, 0, 0.55, 0.25, 0.3, 0.2, 0.6, 0.2,
-      0.3, 0, 0.55, 0.2, 0.3, 0.2, 0.55, 0, 0.3, 0.2, 0.55, 0.25, 0.35, 0.25, 0.65, 0.25,
+      0.28, 0, 0.52, 0.18, 0.28, 0.18, 0.55, 0, 0.28, 0, 0.52, 0.22, 0.28, 0.18, 0.58, 0.2,
+      0.28, 0, 0.52, 0.18, 0.28, 0.18, 0.55, 0, 0.28, 0.2, 0.55, 0.25, 0.32, 0.22, 0.62, 0.25,
+      0.3, 0, 0.55, 0.2, 0.3, 0.2, 0.58, 0, 0.3, 0, 0.55, 0.24, 0.3, 0.2, 0.6, 0.22,
+      0.3, 0, 0.55, 0.2, 0.3, 0.22, 0.6, 0.2, 0.32, 0.22, 0.58, 0.25, 0.38, 0.25, 0.66, 0.28,
     ],
+    // Pulsing deep sub-synth sonar bassline
     bass: [
-      36, null, 36, 43, null, 36, 48, null, 36, null, 37, null, 43, null, 39, 37,
-      36, null, 36, 43, null, 36, 46, null, 32, null, 34, null, 39, null, 43, null,
+      36, 36, null, 36, 43, null, 36, 48, 36, null, 37, 37, 43, null, 39, 37,
+      36, 36, null, 36, 43, null, 36, 46, 32, null, 34, 34, 39, null, 43, 37,
+      36, 36, null, 36, 43, null, 48, 43, 37, 37, null, 37, 44, null, 43, 39,
+      32, 32, null, 32, 39, null, 34, 41, 36, 36, null, 43, 39, 37, 36, null,
     ],
     bassType: 'triangle',
-    bassFilterHz: 600,
+    bassFilterHz: 540,
+    doubleTimeSub: true,
+    // Haunting resonant submarine sonar pings!
+    sonar: [
+      84, null, null, null, null, null, null, null, 87, null, null, null, null, null, null, null,
+      85, null, null, null, null, null, null, null, 79, null, null, null, null, null, null, null,
+      84, null, null, null, null, null, 91, null, 85, null, null, null, null, null, null, null,
+      80, null, null, null, 82, null, null, null, 84, null, null, null, null, null, null, null,
+    ],
     lead: [
       72, null, null, 75, null, null, 73, null, 72, null, 67, null, null, null, 70, null,
       72, null, null, 79, null, 75, 73, null, 72, null, 70, null, 67, null, null, null,
+      75, null, null, 79, null, 77, 75, null, 73, null, 72, null, 70, null, 67, null,
+      68, null, 70, null, 72, null, 75, null, 73, null, 72, null, 67, null, null, null,
     ],
     leadType: 'triangle',
-    leadFilterHz: 1850,
+    leadFilterHz: 1650,
+    leadStyle: 'sonar',
     chords: {
       0: [48, 55, 60, 63],
       16: [49, 55, 61, 63],
       24: [44, 51, 56, 63],
+      32: [48, 55, 60, 63],
+      40: [49, 56, 61, 67],
+      48: [44, 51, 56, 60],
+      56: [46, 53, 58, 63],
     },
     chordStyle: 'pad',
     arp: [
       60, 63, 67, 72, 67, 63, 60, 67, 61, 63, 67, 73, 67, 63, 61, 67,
       60, 63, 67, 72, 75, 72, 67, 63, 56, 60, 63, 68, 70, 67, 63, 58,
+      60, 67, 72, 75, 72, 67, 63, 60, 61, 67, 73, 75, 73, 67, 61, 63,
+      56, 63, 68, 72, 58, 63, 70, 75, 60, 67, 72, 79, 75, 72, 67, 63,
     ],
   },
 
-  // Zone 2 Primal Jungle: Tribal-electro syncopated primal groove (A Dorian, 138 BPM)
+  // Zone 2 Primal Jungle: Tribal percussive bass + rhythmic wooden marimba & jungle groove (A Dorian, 140 BPM, 64-step)
   combat_jungle: {
-    bpm: 138,
-    steps: 32,
+    bpm: 140,
+    steps: 64,
     swing: 0.05,
     kick: [
-      1, 0, 0, 0.55, 0, 0, 0.85, 0, 1, 0, 0, 0, 0.65, 0, 0, 0,
-      1, 0, 0, 0.55, 0, 0, 0.85, 0, 1, 0, 0.5, 0, 0, 0, 0.6, 0,
+      1, 0, 0, 0.58, 0, 0, 0.88, 0, 1, 0, 0, 0, 0.68, 0, 0, 0,
+      1, 0, 0, 0.58, 0, 0, 0.88, 0, 1, 0, 0.55, 0, 0, 0, 0.65, 0,
+      1, 0, 0, 0.6, 0, 0, 0.9, 0, 1, 0, 0.45, 0, 0.7, 0, 0, 0,
+      1, 0, 0, 0.6, 0, 0, 0.9, 0, 1, 0, 0.58, 0, 0.65, 0, 0.75, 0,
     ],
     snare: [
-      0, 0, 0, 0, 0.8, 0, 0, 0, 0, 0, 0.35, 0, 0.85, 0, 0, 0.3,
-      0, 0, 0, 0, 0.8, 0, 0, 0.3, 0, 0, 0, 0, 0.9, 0, 0.35, 0,
+      0, 0, 0, 0, 0.82, 0, 0, 0, 0, 0, 0.38, 0, 0.88, 0, 0, 0.32,
+      0, 0, 0, 0, 0.82, 0, 0, 0.3, 0, 0, 0, 0, 0.92, 0, 0.38, 0,
+      0, 0, 0, 0, 0.85, 0, 0, 0.25, 0, 0, 0.4, 0, 0.88, 0, 0, 0.35,
+      0, 0, 0, 0, 0.85, 0, 0.3, 0, 0, 0, 0.4, 0, 0.95, 0.35, 0.5, 0.6,
     ],
     hat: [
-      0.4, 0.25, 0.65, 0.2, 0.4, 0.3, 0.65, 0.25, 0.4, 0.25, 0.65, 0.25, 0.4, 0.3, 0.7, 0.3,
-      0.4, 0.25, 0.65, 0.2, 0.4, 0.3, 0.65, 0.25, 0.4, 0.25, 0.65, 0.3, 0.45, 0.3, 0.75, 0.35,
+      0.42, 0.25, 0.68, 0.22, 0.42, 0.3, 0.68, 0.25, 0.42, 0.25, 0.68, 0.25, 0.42, 0.3, 0.72, 0.3,
+      0.42, 0.25, 0.68, 0.22, 0.42, 0.3, 0.68, 0.25, 0.42, 0.25, 0.68, 0.3, 0.48, 0.32, 0.78, 0.35,
+      0.44, 0.25, 0.7, 0.25, 0.44, 0.32, 0.7, 0.28, 0.44, 0.25, 0.7, 0.28, 0.44, 0.32, 0.75, 0.32,
+      0.44, 0.28, 0.72, 0.25, 0.45, 0.32, 0.72, 0.3, 0.48, 0.3, 0.75, 0.32, 0.52, 0.35, 0.82, 0.4,
     ],
+    // Syncopated tribal conga / tom percussion
     perc: [
-      0, 0, 57, 0, 0, 60, 0, 55, 0, 0, 57, 0, 0, 62, 60, 0,
-      0, 0, 57, 0, 0, 64, 0, 60, 0, 57, 0, 55, 0, 60, 62, 0,
+      0, 52, 57, 0, 0, 60, 0, 55, 0, 52, 57, 0, 0, 62, 60, 57,
+      0, 52, 57, 0, 0, 64, 0, 60, 0, 57, 0, 55, 52, 60, 62, 57,
+      0, 52, 57, 0, 55, 60, 0, 57, 0, 52, 62, 0, 0, 64, 60, 57,
+      0, 55, 60, 0, 0, 64, 62, 60, 0, 57, 55, 52, 57, 60, 64, 62,
+    ],
+    // Rhythmic woody marimba ostinato!
+    marimba: [
+      69, null, 72, 74, null, 76, 72, null, 69, 72, null, 76, 79, null, 76, 74,
+      67, null, 71, 74, null, 76, 71, null, 69, 72, 74, null, 76, 74, 72, null,
+      69, 72, null, 76, 79, null, 81, 79, 76, null, 74, 72, 69, null, 72, 74,
+      71, null, 74, 76, 79, null, 76, 74, 72, 74, 76, null, 81, 79, 76, null,
     ],
     bass: [
       45, null, 45, 52, null, 45, 48, 50, 45, null, 57, null, 52, 50, 48, null,
       43, null, 43, 50, null, 43, 47, 48, 45, null, 52, 50, 48, 45, 43, null,
+      45, 45, null, 52, null, 45, 50, 52, 45, null, 57, 55, 52, 50, 48, 45,
+      43, 43, null, 50, null, 43, 47, 50, 45, null, 52, 55, 52, 48, 45, null,
     ],
     bassType: 'sawtooth',
-    bassFilterHz: 850,
+    bassFilterHz: 880,
     lead: [
       69, null, 72, 74, null, 76, 74, 72, 69, null, 67, null, 69, null, 72, null,
       74, null, 76, 79, null, 76, 74, 72, 71, null, 69, null, 67, null, 64, null,
+      81, null, 79, 76, null, 74, 72, null, 76, null, 74, 72, 69, null, null, null,
+      79, null, 76, 74, 72, null, 74, 76, 74, null, 72, 71, 69, null, 64, null,
     ],
     leadType: 'square',
-    leadFilterHz: 2100,
+    leadFilterHz: 2250,
+    leadStyle: 'marimba',
     chords: {
       0: [57, 60, 64, 67],
       16: [55, 59, 62, 66],
       24: [57, 60, 64, 69],
+      32: [57, 60, 64, 67],
+      48: [55, 59, 62, 67],
+      56: [57, 60, 64, 69],
     },
     chordStyle: 'stab',
   },
 
-  // Elite Wave: High-octane adrenaline overdrive (F# minor, 146 BPM)
+  // Elite Wave: High-octane adrenaline overdrive with double-time bass & alarm brass stabs (F# minor, 150 BPM, 64-step)
   elite: {
-    bpm: 146,
-    steps: 32,
+    bpm: 150,
+    steps: 64,
     swing: 0,
     kick: [
-      1, 0, 0.45, 0, 1, 0, 0.45, 0, 1, 0, 0.5, 0, 1, 0, 0.5, 0.4,
-      1, 0, 0.45, 0, 1, 0, 0.45, 0, 1, 0, 0.55, 0, 1, 0.5, 1, 0,
+      1, 0, 0.55, 0, 1, 0, 0.55, 0, 1, 0, 0.6, 0, 1, 0, 0.6, 0.45,
+      1, 0, 0.55, 0, 1, 0, 0.55, 0, 1, 0, 0.65, 0, 1, 0.55, 1, 0,
+      1, 0, 0.55, 0, 1, 0, 0.6, 0.45, 1, 0, 0.6, 0, 1, 0, 0.65, 0,
+      1, 0, 0.6, 0, 1, 0.45, 0.65, 0, 1, 0.55, 1, 0, 1, 0.65, 1, 0.7,
     ],
     snare: [
-      0, 0, 0, 0, 1, 0, 0, 0.3, 0, 0, 0, 0, 1, 0, 0.35, 0,
-      0, 0, 0, 0, 1, 0, 0, 0.35, 0, 0, 0, 0.4, 1, 0, 0.5, 0.65,
+      0, 0, 0, 0, 1, 0, 0, 0.35, 0, 0, 0, 0, 1, 0, 0.4, 0,
+      0, 0, 0, 0, 1, 0, 0, 0.35, 0, 0, 0, 0.45, 1, 0, 0.55, 0.7,
+      0, 0, 0, 0, 1, 0, 0, 0.35, 0, 0, 0, 0.35, 1, 0, 0.45, 0,
+      0, 0, 0, 0, 1, 0, 0.35, 0, 0, 0, 0.45, 0, 1, 0.5, 0.65, 0.85,
     ],
     hat: [
-      0.5, 0.35, 0.8, 0.35, 0.5, 0.35, 0.8, 0.4, 0.5, 0.35, 0.8, 0.35, 0.5, 0.4, 0.85, 0.4,
-      0.5, 0.35, 0.8, 0.35, 0.5, 0.35, 0.8, 0.4, 0.5, 0.35, 0.8, 0.4, 0.55, 0.45, 0.9, 0.5,
+      0.55, 0.4, 0.85, 0.4, 0.55, 0.4, 0.85, 0.45, 0.55, 0.4, 0.85, 0.4, 0.55, 0.45, 0.9, 0.45,
+      0.55, 0.4, 0.85, 0.4, 0.55, 0.4, 0.85, 0.45, 0.55, 0.4, 0.85, 0.45, 0.6, 0.48, 0.92, 0.52,
+      0.55, 0.4, 0.85, 0.4, 0.55, 0.42, 0.85, 0.45, 0.55, 0.4, 0.85, 0.42, 0.58, 0.45, 0.9, 0.48,
+      0.58, 0.42, 0.88, 0.45, 0.58, 0.45, 0.88, 0.48, 0.6, 0.48, 0.9, 0.5, 0.65, 0.52, 0.95, 0.58,
     ],
+    // Relentless 16th-note double-time driving bass!
     bass: [
       42, 54, 42, 54, 42, 54, 45, 47, 42, 54, 42, 54, 49, 47, 45, 44,
       38, 50, 38, 50, 40, 52, 40, 52, 42, 54, 45, 57, 49, 47, 45, 44,
+      42, 54, 42, 43, 42, 54, 45, 47, 42, 54, 49, 54, 50, 49, 47, 45,
+      38, 50, 38, 50, 40, 52, 44, 56, 42, 54, 45, 57, 49, 50, 54, 49,
     ],
     bassType: 'sawtooth',
-    bassFilterHz: 1200,
+    bassFilterHz: 1380,
+    doubleTimeSub: true,
+    // Urgent alarm brass stabs!
+    brassStabs: {
+      0: [54, 61, 66],
+      6: [55, 62, 67],
+      16: [50, 57, 62],
+      20: [52, 59, 64],
+      24: [54, 61, 66],
+      32: [54, 61, 66, 69],
+      38: [55, 62, 67],
+      48: [50, 57, 62],
+      52: [52, 59, 64],
+      56: [54, 61, 66],
+      60: [56, 62, 68],
+    },
     lead: [
       66, 69, 73, null, 71, 69, 66, null, 64, 66, 69, null, 73, null, 71, null,
       74, 73, 71, null, 69, 71, 73, null, 78, null, 76, 73, 71, 69, 66, null,
+      78, null, 76, 73, 74, null, 73, 71, 69, 71, 73, 76, 78, null, 73, null,
+      81, null, 78, 76, 74, 73, 71, 69, 73, null, 76, null, 78, null, 73, null,
     ],
     leadType: 'sawtooth',
-    leadFilterHz: 3200,
+    leadFilterHz: 3500,
+    leadStyle: 'shred',
     chords: {
       0: [54, 57, 61],
       16: [50, 54, 57],
       20: [52, 56, 59],
       24: [54, 57, 61],
+      32: [54, 57, 61],
+      48: [50, 54, 57],
+      52: [52, 56, 59],
+      56: [54, 57, 61],
     },
     chordStyle: 'stab',
     arp: [
       78, 73, 69, 73, 78, 73, 69, 73, 76, 71, 68, 71, 76, 71, 68, 71,
       74, 69, 66, 69, 76, 71, 68, 71, 78, 73, 69, 73, 81, 78, 73, 69,
+      78, 81, 85, 81, 78, 73, 69, 73, 76, 80, 83, 80, 76, 71, 68, 71,
+      74, 78, 81, 78, 76, 80, 83, 80, 78, 81, 85, 90, 85, 81, 78, 73,
     ],
   },
 
-  // Boss Battle: Relentless ferocious boss anthem (D Phrygian/minor, 154 BPM)
+  // Boss Battle: Ferocious final-boss anthem with thunderous double-time bass & dramatic alarm brass stabs (D Phrygian, 158 BPM, 64-step)
   boss: {
-    bpm: 154,
-    steps: 32,
+    bpm: 158,
+    steps: 64,
     swing: 0,
     kick: [
-      1, 0, 0.6, 0, 1, 0, 0.55, 0.45, 1, 0, 0.65, 0, 1, 0, 0.7, 0,
-      1, 0, 0.6, 0, 1, 0, 0.6, 0.5, 1, 0.55, 1, 0, 1, 0.6, 1, 0.7,
+      1, 0, 0.65, 0, 1, 0, 0.65, 0.5, 1, 0, 0.7, 0, 1, 0, 0.75, 0,
+      1, 0, 0.65, 0, 1, 0, 0.65, 0.55, 1, 0.6, 1, 0, 1, 0.65, 1, 0.75,
+      1, 0, 0.65, 0.45, 1, 0, 0.65, 0.5, 1, 0, 0.7, 0, 1, 0.5, 0.75, 0,
+      1, 0, 0.7, 0, 1, 0.55, 1, 0.55, 1, 0.65, 1, 0.65, 1, 0.75, 1, 0.85,
     ],
     snare: [
-      0, 0, 0, 0, 1, 0, 0, 0.35, 0, 0, 0, 0.4, 1, 0, 0.4, 0,
-      0, 0, 0, 0, 1, 0, 0, 0.35, 0, 0, 0, 0.5, 1, 0.45, 0.6, 0.85,
+      0, 0, 0, 0, 1, 0, 0, 0.38, 0, 0, 0, 0.45, 1, 0, 0.45, 0,
+      0, 0, 0, 0, 1, 0, 0, 0.38, 0, 0, 0, 0.52, 1, 0.5, 0.65, 0.88,
+      0, 0, 0, 0, 1, 0, 0, 0.4, 0, 0, 0, 0.48, 1, 0, 0.48, 0.35,
+      0, 0, 0, 0, 1, 0, 0.4, 0, 0, 0.4, 0, 0.55, 1, 0.6, 0.78, 0.95,
     ],
     hat: [
-      0.55, 0.4, 0.85, 0.4, 0.55, 0.4, 0.85, 0.45, 0.55, 0.4, 0.85, 0.4, 0.55, 0.45, 0.9, 0.45,
-      0.55, 0.4, 0.85, 0.4, 0.55, 0.4, 0.85, 0.45, 0.6, 0.45, 0.9, 0.5, 0.6, 0.5, 0.95, 0.6,
+      0.58, 0.42, 0.88, 0.42, 0.58, 0.42, 0.88, 0.48, 0.58, 0.42, 0.88, 0.42, 0.58, 0.48, 0.92, 0.48,
+      0.58, 0.42, 0.88, 0.42, 0.58, 0.42, 0.88, 0.48, 0.62, 0.48, 0.92, 0.52, 0.65, 0.52, 0.96, 0.62,
+      0.58, 0.45, 0.88, 0.45, 0.58, 0.45, 0.88, 0.48, 0.58, 0.45, 0.88, 0.45, 0.6, 0.48, 0.92, 0.5,
+      0.6, 0.48, 0.9, 0.48, 0.62, 0.5, 0.92, 0.52, 0.65, 0.52, 0.95, 0.55, 0.7, 0.58, 1.0, 0.68,
     ],
+    // Thunderous 16th-note double-time Phrygian gallop bass!
     bass: [
       38, 50, 38, 39, 38, 50, 45, 38, 38, 50, 38, 39, 43, 45, 44, 41,
       38, 50, 38, 39, 34, 46, 36, 48, 38, 50, 41, 53, 44, 45, 50, 45,
+      38, 50, 38, 39, 41, 53, 39, 51, 38, 50, 45, 57, 44, 45, 43, 41,
+      34, 46, 34, 46, 36, 48, 39, 51, 38, 50, 44, 56, 45, 57, 50, 39,
     ],
     bassType: 'sawtooth',
-    bassFilterHz: 1450,
+    bassFilterHz: 1620,
+    doubleTimeSub: true,
+    // Dramatic boss alarm brass stabs!
+    brassStabs: {
+      0: [50, 57, 62, 69],
+      3: [51, 58, 63],
+      8: [51, 58, 63, 69],
+      14: [50, 56, 62],
+      16: [46, 53, 58, 65],
+      20: [48, 55, 60, 67],
+      24: [50, 56, 62, 68],
+      28: [51, 57, 63, 69],
+      32: [50, 57, 62, 74],
+      38: [51, 58, 63, 75],
+      44: [50, 56, 62, 69],
+      48: [46, 53, 58, 70],
+      52: [48, 55, 60, 72],
+      56: [50, 57, 62, 74],
+      60: [51, 58, 63, 75],
+      62: [50, 56, 62, 74],
+    },
     lead: [
       62, null, 63, 62, 69, null, 68, null, 65, 63, 62, null, 60, 62, 65, 69,
       74, null, 75, 74, 70, null, 69, null, 68, 65, 63, 62, 69, null, 65, 63,
+      74, 75, 74, 70, 69, null, 74, 75, 77, null, 75, 74, 70, 69, 68, 65,
+      70, null, 74, 75, 72, null, 75, 77, 74, 77, 81, 82, 81, 77, 75, 74,
     ],
     leadType: 'sawtooth',
-    leadFilterHz: 3600,
+    leadFilterHz: 3900,
+    leadStyle: 'shred',
     chords: {
       0: [50, 57, 62],
       8: [51, 58, 63],
       16: [46, 53, 58],
       24: [50, 56, 62],
+      32: [50, 57, 62],
+      40: [51, 58, 63],
+      48: [46, 53, 58],
+      56: [50, 56, 62],
     },
     chordStyle: 'stab',
     arp: [
       74, 75, 81, 75, 74, 69, 65, 69, 74, 75, 81, 82, 81, 75, 74, 69,
       70, 74, 77, 74, 72, 76, 79, 76, 74, 77, 81, 86, 81, 77, 75, 74,
+      74, 81, 86, 81, 75, 82, 87, 82, 74, 81, 86, 89, 86, 82, 81, 75,
+      70, 77, 82, 77, 72, 79, 84, 79, 74, 81, 86, 87, 86, 81, 75, 74,
     ],
   },
 
@@ -1248,20 +1404,44 @@ export class ProceduralSynth {
       this.noise(dest, false, 'highpass', 7200, 6200, 1.2, time, 0.036, 0.075 * hatVel, 0.001);
     }
 
-    // 4. Optional tribal/pitched percussion (Zone 2 Primal Jungle)
+    // 4. Optional tribal/pitched percussion (Zone 2 Primal Jungle & surf-tom fills)
     if (pattern.perc) {
       const percMidi = pattern.perc[step] ?? 0;
       if (percMidi > 0) {
         const pf = midiToFreq(percMidi);
-        this.tone(dest, 'triangle', pf * 1.18, pf * 0.85, time, 0.09, 0.16, 0.002);
+        this.tone(dest, 'triangle', pf * 1.24, pf * 0.82, time, 0.095, 0.17, 0.002);
+        this.noise(dest, true, 'bandpass', pf * 3.5, pf * 1.6, 1.8, time, 0.025, 0.06, 0.001);
       }
     }
 
-    // 5. Bassline
+    // 4b. Rhythmic woody marimba ostinato (Zone 2 Primal Jungle)
+    if (pattern.marimba) {
+      const mMidi = pattern.marimba[step];
+      if (mMidi !== null && mMidi !== undefined) {
+        const mf = midiToFreq(mMidi);
+        this.tone(dest, 'sine', mf, mf, time, stepDur * 1.35, 0.135, 0.002);
+        this.tone(dest, 'triangle', mf * 4, mf * 3.96, time, 0.026, 0.055, 0.001, 4200);
+      }
+    }
+
+    // 4c. Deep-sea pulsing resonant sonar ping with liquid echo tail (Zone 1 Abyssal Trench)
+    if (pattern.sonar) {
+      const sMidi = pattern.sonar[step];
+      if (sMidi !== null && sMidi !== undefined) {
+        const sf = midiToFreq(sMidi);
+        this.tone(dest, 'sine', sf, sf * 0.996, time, stepDur * 3.8, 0.11, 0.006, 2600, 2.5);
+        this.tone(dest, 'sine', sf * 2, sf * 1.99, time + 0.004, stepDur * 2.1, 0.038, 0.004, 3400);
+        // Submerged sonar echo pings
+        this.tone(dest, 'sine', sf, sf * 0.995, time + stepDur * 3, stepDur * 2.8, 0.052, 0.01, 1800, 2.0);
+        this.tone(dest, 'sine', sf, sf * 0.994, time + stepDur * 6, stepDur * 2.2, 0.024, 0.012, 1300, 1.8);
+      }
+    }
+
+    // 5. Bassline (with optional double-time sub-octave reinforcement for Abyss / Elite / Boss)
     const bassMidi = pattern.bass[step];
     if (bassMidi !== null && bassMidi !== undefined) {
       const bf = midiToFreq(bassMidi);
-      const isSustained = pattern.bass[step + 1] === null;
+      const isSustained = pattern.bass[(step + 1) % pattern.steps] === null;
       const dur = isSustained ? stepDur * 1.85 : stepDur * 0.88;
       this.tone(
         dest,
@@ -1270,30 +1450,67 @@ export class ProceduralSynth {
         bf,
         time,
         dur,
-        pattern.bassType === 'sawtooth' ? 0.17 : 0.24,
+        pattern.bassType === 'sawtooth' ? 0.175 : 0.24,
         0.004,
         pattern.bassFilterHz,
-        1.6
+        pattern.doubleTimeSub ? 2.1 : 1.6
       );
+      if (pattern.doubleTimeSub) {
+        // Deep punchy sub-bass lock + crisp double-time drive
+        const subFreq = bf >= 64 ? bf * 0.5 : bf;
+        this.tone(dest, 'sine', subFreq, subFreq * 0.985, time, stepDur * 0.92, 0.16, 0.003, 260);
+      }
     }
 
-    // 6. Lead melody
+    // 6. Lead melody (biome-styled articulation: surf twang, sonar glass, jungle wood, boss shred)
     const leadMidi = pattern.lead[step];
     if (leadMidi !== null && leadMidi !== undefined) {
       const lf = midiToFreq(leadMidi);
-      const dur = stepDur * 1.65;
-      this.tone(
-        dest,
-        pattern.leadType,
-        lf,
-        lf,
-        time,
-        dur,
-        pattern.leadType === 'sine' ? 0.14 : 0.115,
-        0.006,
-        pattern.leadFilterHz,
-        1.1
-      );
+      const style = pattern.leadStyle ?? 'default';
+      if (style === 'surf') {
+        // Twangy alien surf-synth pluck + slapback echo!
+        this.tone(dest, 'sawtooth', lf * 1.012, lf, time, stepDur * 1.35, 0.11, 0.003, pattern.leadFilterHz, 1.8);
+        this.tone(dest, 'square', lf * 0.994, lf, time, stepDur * 1.1, 0.055, 0.003, pattern.leadFilterHz * 0.85, 1.2);
+        this.tone(dest, 'triangle', lf, lf, time + stepDur * 1.5, stepDur * 0.9, 0.042, 0.004, 1900, 1.0);
+      } else if (style === 'sonar') {
+        // Liquid resonant underwater synth lead
+        this.tone(dest, 'triangle', lf, lf, time, stepDur * 2.1, 0.125, 0.015, pattern.leadFilterHz, 2.0);
+        this.tone(dest, 'sine', lf * 2, lf * 2, time + 0.01, stepDur * 1.5, 0.04, 0.02, 2400, 1.0);
+      } else if (style === 'marimba') {
+        // Punchy tribal wood-synth lead
+        this.tone(dest, 'square', lf * 1.008, lf, time, stepDur * 1.25, 0.09, 0.003, pattern.leadFilterHz, 1.4);
+        this.tone(dest, 'sine', lf, lf, time, stepDur * 1.45, 0.085, 0.002);
+      } else if (style === 'shred') {
+        // Cutting dual-detuned elite/boss shred lead
+        this.tone(dest, 'sawtooth', lf * 1.005, lf, time, stepDur * 1.3, 0.105, 0.003, pattern.leadFilterHz, 1.6);
+        this.tone(dest, 'sawtooth', lf * 0.995, lf, time, stepDur * 1.3, 0.085, 0.003, pattern.leadFilterHz * 0.9, 1.4);
+      } else {
+        const dur = stepDur * 1.65;
+        this.tone(
+          dest,
+          pattern.leadType,
+          lf,
+          lf,
+          time,
+          dur,
+          pattern.leadType === 'sine' ? 0.14 : 0.115,
+          0.006,
+          pattern.leadFilterHz,
+          1.1
+        );
+      }
+    }
+
+    // 6b. Dramatic alarm brass stabs (Elite & Boss waves)
+    const brass = pattern.brassStabs?.[step];
+    if (brass && brass.length > 0) {
+      const stabDur = stepDur * 2.2;
+      for (let i = 0; i < brass.length; i++) {
+        const bf = midiToFreq(brass[i]);
+        // Twin detuned sawtooth brass voices with aggressive filter bite
+        this.tone(dest, 'sawtooth', bf * 1.007, bf, time, stabDur, 0.068, 0.012, 2400, 2.4);
+        this.tone(dest, 'sawtooth', bf * 0.993, bf, time, stabDur, 0.062, 0.014, 1950, 2.0);
+      }
     }
 
     // 7. Chords (pad / warm Rhodes / synthwave stabs)
