@@ -436,7 +436,7 @@ function drawTileSprite(ctx: CanvasRenderingContext2D, id: string, size: number)
   }
 
   // Faint grid seam
-  ctx.strokeStyle = 'rgba(0, 0, 0, 0.09)';
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.035)';
   ctx.lineWidth = 1;
   ctx.strokeRect(0.5, 0.5, size - 1, size - 1);
 }

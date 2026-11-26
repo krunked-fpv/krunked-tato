@@ -206,6 +206,7 @@ export class GameApp {
         await this.syncCustomAudio();
       }
       this.ui.invalidate();
+      this.renderUiImmediate();
     } catch {
       // Built-in mode stays active seamlessly
     }
@@ -240,6 +241,7 @@ export class GameApp {
       actual === 'CUSTOM_PACK' ? 'Custom Pack active!' : 'Built-In Krunked Art active.',
       false,
     );
+    this.renderUiImmediate();
   }
 
   private async uploadPckFile(file: File): Promise<void> {

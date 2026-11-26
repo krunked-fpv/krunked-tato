@@ -444,12 +444,24 @@ export function renderCodexScreen(container: HTMLElement, ctx: ModalContext): vo
     bodyHtml = catalog.challenges
       .map((ch) => {
         const done = unlocked.has(ch.id);
+        const rewardName =
+          ch.rewardType === 'character'
+            ? catalog.charactersById[ch.rewardId]?.name
+            : ch.rewardType === 'weapon'
+              ? catalog.weaponsById[ch.rewardId]?.name
+              : catalog.itemsById[ch.rewardId]?.name;
+        const formattedReward =
+          rewardName ??
+          ch.rewardId
+            .split('_')
+            .map((w) => (w.length > 0 ? w[0].toUpperCase() + w.slice(1) : ''))
+            .join(' ');
         return `<div class="kt-panel" style="padding:12px;border-color:${done ? '#54f06b' : '#110f17'}">
           <div style="font-weight:900;color:${done ? '#54f06b' : 'var(--kt-gold)'}">
             ${done ? '✓ ' : ''}${escapeHtml(ch.name)}
           </div>
           <div style="font-size:12px;color:var(--kt-muted);margin-top:3px">${escapeHtml(ch.description)}</div>
-          <div style="font-size:11px;font-weight:800;margin-top:4px;color:var(--kt-cyan)">Reward: ${escapeHtml(ch.rewardType.toUpperCase())} · ${escapeHtml(ch.rewardId)}</div>
+          <div style="font-size:11px;font-weight:800;margin-top:4px;color:var(--kt-cyan)">Reward: ${escapeHtml(ch.rewardType.toUpperCase())} · ${escapeHtml(formattedReward)}</div>
         </div>`;
       })
       .join('');

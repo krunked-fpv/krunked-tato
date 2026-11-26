@@ -337,7 +337,7 @@ export function renderShopScreen(container: HTMLElement, ctx: ShopRenderContext)
             <div class="kt-panel kt-subpanel">
               <div class="kt-subpanel-title">
                 <span>OWNED ITEMS (${p.items.length})</span>
-                <span style="font-size:11px;color:var(--kt-muted)">TAP TO INSPECT</span>
+                <span style="font-size:11px;color:var(--kt-muted)">${inputMode === 'touch' ? 'TAP TO INSPECT' : inputMode === 'gamepad' ? 'SELECT TO INSPECT' : 'CLICK TO INSPECT'}</span>
               </div>
               <div class="kt-items-strip">${itemsHtml}</div>
               ${

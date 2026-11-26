@@ -166,9 +166,16 @@ export class DevDrawer {
     }
     panel.appendChild(modeRow);
 
-    // Save reset
+    // Save reset & kit shortcuts
     const resetRow = this.makeRow();
     resetRow.appendChild(this.makeBtn('Quick Run', () => this.bridge.startQuickRun()));
+    resetRow.appendChild(
+      this.makeBtn('+3 Weps', () => {
+        this.bridge.dispatch({ type: 'debug_give_weapon', weaponId: 'sword', tier: 2 });
+        this.bridge.dispatch({ type: 'debug_give_weapon', weaponId: 'smg', tier: 2 });
+        this.bridge.dispatch({ type: 'debug_give_weapon', weaponId: 'slingshot', tier: 2 });
+      }),
+    );
     resetRow.appendChild(this.makeBtn('Reset Save', () => this.bridge.resetSave()));
     panel.appendChild(resetRow);
 

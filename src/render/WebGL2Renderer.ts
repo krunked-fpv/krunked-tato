@@ -729,18 +729,29 @@ export class WebGL2Renderer implements RendererAPI {
     this.pushQuad(whiteReg, -wallT / 2 + EDGE_MAP_DIST / 2, ARENA_H / 2, wallT + EDGE_MAP_DIST, ARENA_H, 0, wallRgb[0], wallRgb[1], wallRgb[2], 1);
     this.pushQuad(whiteReg, ARENA_W + wallT / 2 - EDGE_MAP_DIST / 2, ARENA_H / 2, wallT + EDGE_MAP_DIST, ARENA_H, 0, wallRgb[0], wallRgb[1], wallRgb[2], 1);
 
-    // Playable floor tile grid (128x128 tiles across 2048x1536 -> 16x12 = 192 quads)
+    // Playable floor tile grid (cohesive single-theme floor tile per zone with subtle organic tint variation)
     const tileStep = 128;
     const tileCols = Math.ceil(ARENA_W / tileStep);
     const tileRows = Math.ceil(ARENA_H / tileStep);
-    const tilePrefix = state.zoneId === 1 ? 'tile_abyss_' : state.zoneId === 2 ? 'tile_jungle_' : 'tile_crash_';
-    const tileMod = state.zoneId === 0 ? 6 : 3;
+    const baseTileId =
+      state.zoneId === 1 ? 'tile_abyss_0' : state.zoneId === 2 ? 'tile_jungle_1' : 'tile_crash_1';
+    const tileReg = this.getRegion(baseTileId, 'tile_crash_1');
     for (let ty = 0; ty < tileRows; ty++) {
       for (let tx = 0; tx < tileCols; tx++) {
-        const idx = ((tx * 7 + ty * 13 + tx * ty * 3) >>> 0) % tileMod;
-        const tileId = `${tilePrefix}${state.zoneId === 0 ? idx + 1 : idx}`;
-        const reg = this.getRegion(tileId, `${tilePrefix}1`);
-        this.pushQuad(reg, tx * tileStep + tileStep / 2, ty * tileStep + tileStep / 2, tileStep + 1, tileStep + 1, 0, 1, 1, 1, 1);
+        const hash = ((tx * 73856093) ^ (ty * 19349663)) >>> 0;
+        const shade = 0.965 + ((hash % 15) / 15) * 0.055;
+        this.pushQuad(
+          tileReg,
+          tx * tileStep + tileStep / 2,
+          ty * tileStep + tileStep / 2,
+          tileStep + 1,
+          tileStep + 1,
+          0,
+          shade,
+          shade,
+          shade,
+          1
+        );
       }
     }
 
@@ -888,9 +899,9 @@ export class WebGL2Renderer implements RendererAPI {
       flipPlayer
     );
 
-    // Floating orbiting weapons
+    // Floating orbiting weapons (enforce clean clearance outside spud face)
     for (let i = 0; i < p.weapons.length; i++) {
-      this.renderWeapon(p.weapons[i], alpha);
+      this.renderWeapon(p.weapons[i], alpha, playerX, playerY - 22, p.weapons.length);
     }
 
     // ------------------------------------------------------------------
@@ -1112,12 +1123,33 @@ export class WebGL2Renderer implements RendererAPI {
     }
   }
 
-  private renderWeapon(w: EquippedWeaponState, alpha: number): void {
-    const wx = lerp(w.prevWorldX, w.worldX, alpha);
-    const wy = lerp(w.prevWorldY, w.worldY, alpha);
+  private renderWeapon(
+    w: EquippedWeaponState,
+    alpha: number,
+    playerCenterX: number,
+    playerCenterY: number,
+    weaponCount: number
+  ): void {
+    let wx = lerp(w.prevWorldX, w.worldX, alpha);
+    let wy = lerp(w.prevWorldY, w.worldY, alpha);
+
+    // Guarantee clean orbit clearance outside the player spud's face silhouette
+    const relX = wx - playerCenterX;
+    const relY = wy - playerCenterY;
+    const dist = Math.hypot(relX, relY);
+    const minClearance = weaponCount === 1 ? 48 : 46;
+    if (weaponCount === 1) {
+      // Single weapon orbits cleanly alongside the spud in its aim direction
+      wx = playerCenterX + Math.cos(w.aimAngle) * 44;
+      wy = playerCenterY + 6 + Math.sin(w.aimAngle) * 26;
+    } else if (dist > 0.1 && dist < minClearance) {
+      const scale = minClearance / dist;
+      wx = playerCenterX + relX * scale;
+      wy = playerCenterY + relY * scale;
+    }
 
     let angle = w.aimAngle;
-    let offset = -w.recoilOffset;
+    let offset = 6 - w.recoilOffset;
     if (w.swingTimer > 0 && w.swingDuration > 0) {
       const p = 1 - w.swingTimer / w.swingDuration;
       if (w.swingType === 0) {

@@ -64,13 +64,44 @@ export function formatSignedStat(key: StatKey, val: number): string {
   return `${sign}${rounded}${suffix}`;
 }
 
+const INVERTED_GOOD_STATS = new Set<string>([
+  'items_price',
+  'weapons_price',
+  'reroll_price',
+  'enemy_speed',
+  'enemy_damage',
+  'enemy_health',
+  'inflation_modifier',
+]);
+
 export function formatEffectLine(eff: EffectDef): { text: string; tone: 'pos' | 'neg' | 'neutral' } {
+  const isInverted = Boolean(eff.stat && INVERTED_GOOD_STATS.has(eff.stat));
   if (eff.text) {
-    const tone = eff.text.trim().startsWith('-') ? 'neg' : eff.text.trim().startsWith('+') ? 'pos' : 'neutral';
+    const trimmed = eff.text.trim();
+    const looksInvertedText = /price|reroll cost|inflation|enemy (hp|health|damage|speed)/i.test(trimmed);
+    const invert = isInverted || looksInvertedText;
+    const tone = trimmed.startsWith('-')
+      ? invert
+        ? 'pos'
+        : 'neg'
+      : trimmed.startsWith('+')
+        ? invert
+          ? 'neg'
+          : 'pos'
+        : 'neutral';
     return { text: eff.text, tone };
   }
   if (eff.stat && typeof eff.value === 'number') {
-    const tone = eff.value > 0 ? 'pos' : eff.value < 0 ? 'neg' : 'neutral';
+    const tone =
+      eff.value > 0
+        ? isInverted
+          ? 'neg'
+          : 'pos'
+        : eff.value < 0
+          ? isInverted
+            ? 'pos'
+            : 'neg'
+          : 'neutral';
     return {
       text: `${formatSignedStat(eff.stat, eff.value)} ${formatStatName(eff.stat)}`,
       tone,
@@ -1024,6 +1055,12 @@ const STYLES_CSS = `
   }
   .kt-upgrade-grid {
     grid-template-columns: repeat(2, minmax(130px, 1fr));
+  }
+}
+
+@media (max-width: 900px), (max-height: 460px) {
+  .kt-hud-hints {
+    display: none !important;
   }
 }
 

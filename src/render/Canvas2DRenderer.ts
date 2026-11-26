@@ -319,13 +319,11 @@ export class Canvas2DRenderer implements RendererAPI {
     const tileStep = 128;
     const tileCols = Math.ceil(ARENA_W / tileStep);
     const tileRows = Math.ceil(ARENA_H / tileStep);
-    const tilePrefix = state.zoneId === 1 ? 'tile_abyss_' : state.zoneId === 2 ? 'tile_jungle_' : 'tile_crash_';
-    const tileMod = state.zoneId === 0 ? 6 : 3;
+    const baseTileId =
+      state.zoneId === 1 ? 'tile_abyss_0' : state.zoneId === 2 ? 'tile_jungle_1' : 'tile_crash_1';
     for (let ty = 0; ty < tileRows; ty++) {
       for (let tx = 0; tx < tileCols; tx++) {
-        const idx = ((tx * 7 + ty * 13 + tx * ty * 3) >>> 0) % tileMod;
-        const tileId = `${tilePrefix}${state.zoneId === 0 ? idx + 1 : idx}`;
-        this.drawSprite(tileId, `${tilePrefix}1`, tx * tileStep + 64, ty * tileStep + 64, 129, 129);
+        this.drawSprite(baseTileId, 'tile_crash_1', tx * tileStep + 64, ty * tileStep + 64, 129, 129);
       }
     }
 
@@ -422,10 +420,24 @@ export class Canvas2DRenderer implements RendererAPI {
 
     for (let i = 0; i < p.weapons.length; i++) {
       const w = p.weapons[i];
-      const wx = lerp(w.prevWorldX, w.worldX, alpha);
-      const wy = lerp(w.prevWorldY, w.worldY, alpha);
+      let wx = lerp(w.prevWorldX, w.worldX, alpha);
+      let wy = lerp(w.prevWorldY, w.worldY, alpha);
+      const pcx = playerX;
+      const pcy = playerY - 22;
+      if (p.weapons.length === 1) {
+        wx = pcx + Math.cos(w.aimAngle) * 44;
+        wy = pcy + 6 + Math.sin(w.aimAngle) * 26;
+      } else {
+        const rx = wx - pcx;
+        const ry = wy - pcy;
+        const d = Math.hypot(rx, ry);
+        if (d > 0.1 && d < 46) {
+          wx = pcx + (rx / d) * 46;
+          wy = pcy + (ry / d) * 46;
+        }
+      }
       let angle = w.aimAngle;
-      let offset = -w.recoilOffset;
+      let offset = 6 - w.recoilOffset;
       if (w.swingTimer > 0 && w.swingDuration > 0) {
         const prog = 1 - w.swingTimer / w.swingDuration;
         if (w.swingType === 0) offset += Math.sin(prog * Math.PI) * 38;

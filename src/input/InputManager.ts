@@ -145,6 +145,9 @@ export class InputManager {
   public setInputMode(mode: InputMode): void {
     const changed = this.activeInputMode !== mode;
     this.activeInputMode = mode;
+    if (mode === 'touch') {
+      this.lastTouchTimestamp = Date.now();
+    }
     this.touchOverlay.setInputMode(mode);
     if (changed) {
       this.onInputModeChange?.(mode);
@@ -254,9 +257,9 @@ export class InputManager {
       }
     }
 
-    if (code === 'Space' || code === 'ArrowUp' || code === 'ArrowDown' || code === 'ArrowLeft' || code === 'ArrowRight') {
+    if (code === 'Enter' || code === 'Space' || code === 'ArrowUp' || code === 'ArrowDown' || code === 'ArrowLeft' || code === 'ArrowRight') {
       const targetTag = (e.target as HTMLElement | null)?.tagName;
-      if (targetTag !== 'INPUT' && targetTag !== 'TEXTAREA') {
+      if (targetTag !== 'INPUT' && targetTag !== 'TEXTAREA' && targetTag !== 'SELECT') {
         e.preventDefault();
       }
     }

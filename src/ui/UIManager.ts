@@ -99,7 +99,10 @@ export class UIManager {
     this.menuLayer = menuLayer;
 
     this.focusNav.attach(this.menuLayer, {
-      onFocusMove: () => this.callbacks.onPlayUiClick('hover'),
+      onFocusMove: (el) => {
+        this.callbacks.onPlayUiClick('hover');
+        this.syncSelectFromFocusedElement(el);
+      },
       onBack: () => this.handleBackAction(),
       onXAction: (el) => this.handleXAction(el),
       onYAction: (el) => this.handleYAction(el),
@@ -144,6 +147,40 @@ export class UIManager {
       return;
     }
     this.focusNav.handleAction(action);
+  }
+
+  private syncSelectFromFocusedElement(el: HTMLElement | null): void {
+    if (!el || !this.lastStateRef) return;
+    const scr = this.lastStateRef.screen;
+    if (scr === 'select_character' && el.dataset.charId) {
+      const id = el.dataset.charId;
+      if (id !== this.localSelection.charId) {
+        const c = this.catalog.charactersById[id];
+        this.localSelection.charId = id;
+        if (c?.startingWeapons[0]) {
+          this.localSelection.weaponId = c.startingWeapons[0];
+        }
+        this.invalidate();
+      }
+    } else if (scr === 'select_weapon' && el.dataset.weaponId) {
+      const id = el.dataset.weaponId;
+      if (id !== this.localSelection.weaponId) {
+        this.localSelection.weaponId = id;
+        this.invalidate();
+      }
+    } else if (scr === 'select_zone' && el.dataset.zoneId !== undefined) {
+      const zid = Number(el.dataset.zoneId) as 0 | 1 | 2;
+      if (zid !== this.localSelection.zoneId) {
+        this.localSelection.zoneId = zid;
+        this.invalidate();
+      }
+    } else if (scr === 'select_danger' && el.dataset.danger !== undefined) {
+      const lv = Number(el.dataset.danger);
+      if (lv !== this.localSelection.danger) {
+        this.localSelection.danger = lv;
+        this.invalidate();
+      }
+    }
   }
 
   private handleBackAction(): void {

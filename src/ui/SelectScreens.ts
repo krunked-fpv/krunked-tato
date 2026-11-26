@@ -41,8 +41,9 @@ export function renderTitleScreen(container: HTMLElement, ctx: SelectFlowContext
   const hasSavedRun = Boolean(saveData.activeRun);
   const spudIcon = assetRegistry.getIconDataUrl('char_well_rounded');
 
+  const isCustomActive = activeMode === 'CUSTOM_PACK' && customPackStatus.available;
   const statusText = customPackStatus.available
-    ? `${activeMode === 'CUSTOM_PACK' ? 'ACTIVE' : 'READY'}: ${customPackStatus.label} (${customPackStatus.textureCount} tex · ${customPackStatus.audioCount} audio)`
+    ? `${isCustomActive ? 'ACTIVE' : 'READY'}: ${customPackStatus.label} (${customPackStatus.textureCount} tex · ${customPackStatus.audioCount} audio)`
     : 'BUILT-IN PROCEDURAL ART ACTIVE';
 
   container.innerHTML = `
@@ -70,10 +71,10 @@ export function renderTitleScreen(container: HTMLElement, ctx: SelectFlowContext
 
       <div class="kt-panel kt-asset-bar">
         <span class="kt-asset-pill">${escapeHtml(statusText)}</span>
-        <button type="button" class="kt-btn kt-btn-sm ${activeMode === 'BUILTIN' ? 'kt-btn-cyan' : ''}" data-focusable="true" data-action="mode-builtin">
+        <button type="button" class="kt-btn kt-btn-sm ${!isCustomActive ? 'kt-btn-cyan' : ''}" data-focusable="true" data-action="mode-builtin">
           USE BUILT-IN ART
         </button>
-        <button type="button" class="kt-btn kt-btn-sm ${activeMode === 'CUSTOM_PACK' ? 'kt-btn-primary' : ''}" data-focusable="true" data-action="mode-custom" ${customPackStatus.available ? '' : 'disabled'}>
+        <button type="button" class="kt-btn kt-btn-sm ${isCustomActive ? 'kt-btn-primary' : ''}" data-focusable="true" data-action="mode-custom" ${customPackStatus.available ? '' : 'disabled'}>
           USE CUSTOM PACK
         </button>
         <button type="button" class="kt-btn kt-btn-sm" data-focusable="true" data-action="pick-pck">
@@ -364,12 +365,22 @@ export function renderWeaponSelect(container: HTMLElement, ctx: SelectFlowContex
 }
 
 export function renderZoneSelect(container: HTMLElement, ctx: SelectFlowContext): void {
-  const { state, catalog, inputMode, callbacks, onSelectLocal } = ctx;
+  const { state, catalog, assetRegistry, inputMode, callbacks, onSelectLocal } = ctx;
   const zones = catalog.zones;
+
+  const zonePreviewMeta: ReadonlyArray<{ tile: string; prop: string; enemy: string }> = [
+    { tile: 'tile_crash_1', prop: 'tree_0', enemy: 'enemy_baby_alien' },
+    { tile: 'tile_abyss_0', prop: 'enemy_spitter', enemy: 'enemy_butcher' },
+    { tile: 'tile_jungle_1', prop: 'tree_jungle', enemy: 'enemy_rhino' },
+  ];
 
   const cardsHtml = zones
     .map((z) => {
       const isSel = z.id === state.selectedZoneId;
+      const meta = zonePreviewMeta[z.id] ?? zonePreviewMeta[0];
+      const tileUrl = assetRegistry.getIconDataUrl(meta.tile);
+      const propUrl = assetRegistry.getIconDataUrl(meta.prop);
+      const enemyUrl = assetRegistry.getIconDataUrl(meta.enemy);
       return `<button
         type="button"
         class="kt-zone-card ${isSel ? 'kt-selected' : ''}"
@@ -378,7 +389,11 @@ export function renderZoneSelect(container: HTMLElement, ctx: SelectFlowContext)
         ${isSel ? 'data-focus-default="true"' : ''}
         data-zone-id="${z.id}"
       >
-        <div class="kt-zone-swatch" style="background:linear-gradient(135deg, ${z.floorPrimary}, ${z.floorSecondary});border-color:${z.accentColor}"></div>
+        <div class="kt-zone-swatch" style="background-color:${z.floorPrimary};background-image:url('${tileUrl}');background-size:64px 64px;background-repeat:repeat;border-color:${z.accentColor};position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-around">
+          <img src="${propUrl}" alt="" style="width:58px;height:58px;object-fit:contain;filter:drop-shadow(0 5px 0 rgba(0,0,0,0.45))" />
+          <img src="${enemyUrl}" alt="" style="width:66px;height:66px;object-fit:contain;filter:drop-shadow(0 5px 0 rgba(0,0,0,0.5))" />
+          <span style="position:absolute;bottom:6px;right:8px;font-size:10px;font-weight:900;background:rgba(12,10,18,0.82);color:${z.accentColor};padding:3px 7px;border-radius:6px;border:1px solid ${z.accentColor}">ZONE ${z.id + 1}</span>
+        </div>
         <div style="font-size:21px;font-weight:900;color:var(--kt-gold)">${escapeHtml(z.name)}</div>
         <div style="font-size:13px;color:var(--kt-muted);font-weight:700">${escapeHtml(z.subtitle)}</div>
         <div style="font-size:12px;font-weight:800;color:${z.accentColor};margin-top:auto">
@@ -440,17 +455,22 @@ export function renderDangerSelect(container: HTMLElement, ctx: SelectFlowContex
       if (d.doubleBoss) mods.push('DOUBLE WAVE 20 BOSS!');
       if (d.nightmareEvents) mods.push('Bullet-Hell & Fog Events');
 
+      const cleanTitle =
+        d.name.trim().toLowerCase() === `danger ${d.level}`
+          ? `DANGER ${d.level}`
+          : `DANGER ${d.level} · ${d.name.replace(/^Danger\s*\d+\s*[-:·]?\s*/i, '')}`;
+
       return `<button
         type="button"
         class="kt-zone-card ${isSel ? 'kt-selected' : ''}"
-        style="min-height:152px"
+        style="min-height:168px"
         data-focusable="true"
         data-focus-group="grid"
         ${isSel ? 'data-focus-default="true"' : ''}
         data-danger="${d.level}"
       >
         <div style="font-size:19px;font-weight:900;color:${d.level >= 5 ? '#ff4757' : d.level >= 2 ? '#ffe142' : '#54f06b'}">
-          DANGER ${d.level} · ${escapeHtml(d.name)}
+          ${escapeHtml(cleanTitle)}
         </div>
         <div style="font-size:12px;color:var(--kt-muted);font-weight:700">${escapeHtml(d.description)}</div>
         <div class="kt-effects-list" style="font-size:12px;margin-top:auto">
