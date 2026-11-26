@@ -574,7 +574,7 @@ export function killEnemy(
       spawnConsumableDrop(state, enemy.x, enemy.y);
     }
     const baseCrate = def ? def.crateDropChance : 0.008;
-    const crateChance = clamp((baseCrate + stats.crate_chance / 100) * luckMult, 0, 0.35);
+    const crateChance = clamp(baseCrate * Math.max(0, 1 + stats.crate_chance / 100) * luckMult, 0, 0.25);
     if (nextRand(state) < crateChance) {
       spawnCrateDrop(state, enemy.x, enemy.y, false);
     }
