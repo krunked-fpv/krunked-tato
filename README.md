@@ -1,5 +1,9 @@
 # krunkedtato
 
+[![CI & Deploy Pages](https://github.com/krunked-fpv/krunked-tato/actions/workflows/ci.yml/badge.svg)](https://github.com/krunked-fpv/krunked-tato/actions/workflows/ci.yml)
+
+**Play Live:** https://krunked-fpv.github.io/krunked-tato/
+
 A standalone, deterministic 60 Hz top-down arena shooter roguelite built in TypeScript and WebGL2, featuring multi-device input (Keyboard/Mouse, Xbox/Standard Gamepad, and auto-hiding transparent Touch controls for Mobile & Tesla in-car browsers), a 60-character / 80-weapon / 194-item declarative EffectGraph, and dual-mode Built-In Original Krunked Art/Synth or optional local Custom Pack loading.
 
 ## Features

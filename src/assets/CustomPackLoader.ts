@@ -552,8 +552,8 @@ export class CustomPackLoader {
   }
 
   public async probe(): Promise<CustomPackStatus> {
-    // 1. Check Vite dev middleware manifest first
-    if (typeof fetch === 'function') {
+    // 1. Check Vite dev middleware manifest first (dev server only)
+    if (import.meta.env?.DEV && typeof fetch === 'function') {
       try {
         const res = await fetch(`${DEV_PACK_PREFIX}manifest.json`, { cache: 'no-cache' });
         if (res.ok) {
